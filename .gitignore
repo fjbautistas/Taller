@@ -1,3 +1,4 @@
 *.gz
 .gitignore~
 *.py~
+/DATA
