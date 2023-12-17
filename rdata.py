@@ -52,43 +52,37 @@ class read_file:
 
 #=======================================================================================================
 if __name__ == '__main__':
-    path = 'DATA/'; file ='sussing_125.z0.000.AHF_halos'
+    path = 'DATA/'; file = 'sussing_125.z0.000.AHF_halos'
     sussing_125 = read_file(path, file)
 
-    #histograma 2D del N. estructuras vs la masa:
-    datos = sussing_125.data[sussing_125.data[:,0] == 0] 
+    # Histograma 2D del N. estructuras vs la masa:
+    datos = sussing_125.data[sussing_125.data[:, 0] == 0]
 
-    ejeX = datos[:,2]; ejeY = datos[:,1]   #Solo datos positivos
-    nz = (ejeX>0)&(ejeY>0)
+    ejeX = datos[:, 2]  # Solo datos positivos
+    ejeY = datos[:, 1]
+    nz = (ejeX > 0) & (ejeY > 0)
 
-    H, xedges, yedges = np.histogram2d(np.log10(ejeX[nz]), 
-                                       ejeY[nz], bins=100)
-    
-    #enmascara el histograma (centra cada bin)
-    H = np.ma.masked_where(H<=0, H)
-    x = (xedges[1:]+xedges[:-1])/2
-    y = (yedges[1:]+yedges[:-1])/2
+    # Convertir a escala logarítmica
+    ejeY_log = np.log10(ejeY[nz])
+    ejeX_log = np.log10(ejeX[nz])
 
-    #Escritura de archivo, primero H y luego los edges: 
-    #np.savetxt('out_data/H_data.csv', H.flatten(), delimiter=',', fmt='%f', header='H')
-    #np.savetxt('out_data/edges_data.csv', np.column_stack((xedges, yedges)), delimiter=',', fmt='%f', header='xedges,yedges')
+    # Crear histograma 2D
+    H, xedges, yedges = np.histogram2d(ejeX_log, ejeY_log, bins=100)
 
-    # Grafico con bines: 
-    fig, ax = plt.subplots(1,1, figsize=(4, 4))
-    X,Y = np.meshgrid(x,y)
-    hist2D = H.T/(xedges[1]-xedges[0])/(yedges[1]-yedges[0])
-    
-    cs = ax.imshow(H.T, origin="lower", cmap=cm.viridis, 
-                   norm=colors.LogNorm(vmin=1),
-                   extent=[xedges[0], xedges[-1], yedges[0],yedges[-1]], 
-                   aspect='auto', interpolation='nearest') 
+    # Gráfico con bines:
+    fig, ax = plt.subplots(1, 1, figsize=(5, 4))
 
-    #plt.yscale('log'); 
+    X, Y = np.meshgrid(xedges, yedges)
+    H_masked = np.ma.masked_where(H == 0, H)  # Mascarar los valores cero
+
+    pc = ax.pcolormesh(X, Y, H_masked.T, norm=colors.LogNorm(vmin=H_masked.min()+1, vmax=H_masked.max()), cmap=cm.viridis)
+
+    cbar = plt.colorbar(pc, ax=ax, pad=0.02)
+    cbar.set_label('Frequency')
+
     ax.set_xlabel(r'log$_{10}$(M$_{halo}$[$M_{0}h^{-1}$])')
-    ax.set_ylabel("Number of subsetructures")
+    ax.set_ylabel("log(Number of substructures)")
     plt.tight_layout()
-    plt.savefig("plot/hist2Db.pdf")
+    plt.savefig("plot/hist2Db_log.pdf")
 
     print('finalicé y todo bien')
-
-
